@@ -74,3 +74,23 @@ For `producer.py`, you must supply a URL and a regex string to look for, each in
 A good enhancement would be to implement a proper scheduler, so that instead of checking the target site every n seconds, the producer script might take a list of url/regex pairs and check each one of them according to a schedule, for example check 10 sites at 15 past each hour.
 
 Another idea would be to handle db inserts by caching records in the consumer and having a threaded worker which does bulk inserts every 100 records or such. Right now there is one cursor execute + commit per record inserted, which is likely causing some overhead and might lag with heavy load.
+
+### References
+
+In general I referred to Python docs for various libs e.g. https://docs.python.org/3/library/argparse.htm
+
+The Hitchhiker’s Guide to Python was valuable for logging: https://docs.python-guide.org/writing/logging/
+
+Module docs for `kafka-python` can be found here: https://kafka-python.readthedocs.io/en/master/usage.html
+
+Setutools 101 SO answer: https://stackoverflow.com/a/26082635
+
+A good logging recipe here from Martijn Pieters: https://stackoverflow.com/a/14058475
+
+Also from him, how to stream http requests: https://stackoverflow.com/a/16870677
+
+A recipe for checking if a table exists using `psycopg2`: https://stackoverflow.com/a/1874268/455916
+
+More `psycopg2` recipes here: https://pynative.com/python-postgresql-tutorial/ (NB: I really don't like the `try: except:` block around multiple lines in the first example - if I cannot connect to the db I actually want to exit the program with the original exception. Also, having looked at it a bit, I don't think it does anything bad to the server if you don't close the connection or cursor objects, they're client side only. Anyway, multiple lines in a try except block is a bad idea in general as it can mask bugs.)
+
+And finally the PostgreSQL docs: https://www.postgresql.org/docs/9.5/datatype-numeric.html
