@@ -65,6 +65,8 @@ A concrete example of this would be (remember to use the virtualenv you set up d
 (env) $ python3 consumer.py kafka-blah-account-blah.aivencloud.com:12345 mytopic "postgres://user:password123@pg-blah-account-blah.aivencloud.com:11111/dbname?sslmode=require" --cert-path d:\certs
 ```
 
+NB: The reddit link will give you a mixture of `200` and `429` responses, which make for more interesting data.
+
 ### Scaling up and monitoring lots of pages
 For `producer.py`, you must supply a URL and a regex string to look for, each instance of `producer.py` only takes one pair of these. This is because I have envisioned that a likely use case would be containerisation, so you can spin up one instance of `producer.py` for each of the websites/pages you want to monitor. For example, 100 producer containers would scale rather better than 1 with 100 URLs to look for. The consumer container can presumably be scaled horizontally, for example in Kubernetes a deployment can be defined which can scale the producer up over however much hardware you want.
 
