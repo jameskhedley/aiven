@@ -60,7 +60,7 @@ NB: When `consumer.py` is started, it will detect whether the necessary db table
 A concrete example of this would be (remember to use the virtualenv you set up during installation):
 
 ```
-(env) $ python3 producer.py kafka-blah-account-blah.aivencloud.com:12345 mytopic https://www.bbc.co.uk/weather/2633858/day1  "Last updated<!-- --> <time>[^\s]+ at \d\d:\d\d</time>" --cert-path d:\certs & > /tmp/log-1.txt
+(env) $ python3 producer.py kafka-blah-account-blah.aivencloud.com:12345 mytopic https://www.bbc.co.uk/weather/2633858/day1  'Last updated<!-- --> <time>[^\s]+ at \d\d:\d\d</time>' --cert-path d:\certs & > /tmp/log-1.txt
 (env) $ python3 producer.py kafka-blah-account-blah.aivencloud.com:12345 mytopic https://old.reddit.com/r/Python/  "Automate the Boring Stuff with Python" --cert-path d:\certs & > /tmp/log-2.txt
 (env) $ python3 consumer.py kafka-blah-account-blah.aivencloud.com:12345 mytopic "postgres://user:password123@pg-blah-account-blah.aivencloud.com:11111/dbname?sslmode=require" --cert-path d:\certs
 ```
