@@ -18,7 +18,9 @@ Checkout this repo to a convenient directory, cd into it and run the following c
 
 ```
 $ python3 -m venv env
-$ ./env/bin/activate
+or
+$ virtualenv env
+$ source ./env/bin/activate
 $ python3 -m pip install .
 ```
 
