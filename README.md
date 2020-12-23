@@ -81,9 +81,11 @@ In general I referred to Python docs for various libs e.g. https://docs.python.o
 
 The Hitchhiker’s Guide to Python was valuable for logging: https://docs.python-guide.org/writing/logging/
 
+Hello World for Kafka got me started with that: https://timber.io/blog/hello-world-in-kafka-using-python/
+
 Module docs for `kafka-python` can be found here: https://kafka-python.readthedocs.io/en/master/usage.html
 
-Setutools 101 SO answer: https://stackoverflow.com/a/26082635
+Setuptools 101 SO answer: https://stackoverflow.com/a/26082635
 
 A good logging recipe here from Martijn Pieters: https://stackoverflow.com/a/14058475
 
