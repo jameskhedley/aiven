@@ -8,24 +8,24 @@ import json
 import datetime
 import atexit
 
-from common import connect_to_postgresql, check_kafka_ssl_files, \
-    get_logger, get_kafka_connection, KAFKA_CONSUMER
-
+import common
+logger = common.get_logger()
 
 def main(kafka_url, topic_name, postgesql_uri, cert_path=""):
     '''Connect to kafka instance, receive observations and write to db.
     '''
     if not cert_path:
         cert_path = os.getcwd()
-    check_kafka_ssl_files(cert_path)
-
-    conn = connect_to_postgresql(postgesql_uri)
+    common.check_kafka_ssl_files(cert_path)
+    
+    conn = common.connect_to_postgresql(postgesql_uri)
 
     setup_db(conn)
 
     logger.info("Starting Kafka consumer, ctrl+c or SIGINT to exit")
     #Set up the kafka consumer and establish connection to the Aiven instance
-    consumer = get_kafka_connection(KAFKA_CONSUMER, kafka_url, cert_path, topic_name)
+    consumer = common.get_kafka_connection(common.KAFKA_CONSUMER, kafka_url,
+                                                        cert_path, topic_name)
 
     #The way I read the psycopg2 docs, reusing a cursor for inserts is fine. If I were retrieving
     #lots of fields you would want a server side cursor (below this is a client-side cursor).
@@ -52,7 +52,7 @@ def main(kafka_url, topic_name, postgesql_uri, cert_path=""):
         conn.commit()
         logger.info("Message value %s written to db", str(all_values))
         #TODO how do we know it worked?
-
+    return True
 
 def setup_db(connection):
     '''Takes a psycopg2 connection object and makes sure the db has the necessary table.
@@ -63,6 +63,7 @@ def setup_db(connection):
                         where table_name='statistics')'''
     cursor.execute(exists_query)
     exists = cursor.fetchone()[0]
+    
     if exists:
         logger.info("Statistics table already exists.")
     else:
@@ -94,7 +95,6 @@ def on_exit(cursor, connection, message=""):
         logger.info("Consumer exiting, closed db connection OK.")
 
 if __name__=='__main__':
-    logger = get_logger()
     DESCRIPTION = "Tool for monitoring websites using Aiven Kafka - consumer."
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('kafka_url',

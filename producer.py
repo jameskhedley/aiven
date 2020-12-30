@@ -9,8 +9,8 @@ import re
 import json
 import requests
 
-from common import check_kafka_ssl_files, \
-    get_logger, get_kafka_connection, KAFKA_PRODUCER
+import common
+logger = common.get_logger()
 
 REQUEST_INTERVAL = 10 # query website every n seconds
 
@@ -19,9 +19,9 @@ def main(kafka_url, topic_name, monitor_url, monitor_regex, cert_path=""):
     '''
     if not cert_path:
         cert_path = os.getcwd()
-    check_kafka_ssl_files(cert_path)
+    common.check_kafka_ssl_files(cert_path)
 
-    producer = get_kafka_connection(KAFKA_PRODUCER, kafka_url, cert_path)
+    producer = common.get_kafka_connection(common.KAFKA_PRODUCER, kafka_url, cert_path)
 
     logger.info("Starting producer loop, ctrl+c or SIGINT to exit")
     while True:
@@ -52,7 +52,6 @@ def main(kafka_url, topic_name, monitor_url, monitor_regex, cert_path=""):
 
 
 if __name__=='__main__':
-    logger = get_logger()
     DESCRIPTION = "Tool for monitoring websites using Aiven Kafka - producer."
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('kafka_url',

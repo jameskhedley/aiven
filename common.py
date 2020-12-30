@@ -5,7 +5,8 @@ import os
 
 import psycopg2
 
-from kafka import KafkaConsumer, KafkaProducer
+#from kafka import KafkaConsumer, KafkaProducer
+import kafka
 
 KAFKA_CERT_FILE = 'service.cert'
 KAFKA_KEY_FILE = 'service.key'
@@ -45,12 +46,14 @@ def get_kafka_connection(object_type, kafka_url, cert_path, topic_name=""):
     '''create either a producer or consumer, depending on object_type parameter.
     object_type must be either KAFKA_CONSUMER or KAFKA_PRODUCER'''
     if object_type == KAFKA_CONSUMER:
-        connection = KafkaConsumer(topic_name, bootstrap_servers=kafka_url, security_protocol='SSL',
+        connection = kafka.KafkaConsumer(topic_name, bootstrap_servers=kafka_url,
+            security_protocol='SSL',
             ssl_cafile=os.path.join(cert_path, AIVEN_CA_CERT_FILE),
             ssl_certfile=os.path.join(cert_path, KAFKA_CERT_FILE),
             ssl_keyfile=os.path.join(cert_path, KAFKA_KEY_FILE))
     elif object_type == KAFKA_PRODUCER:
-        connection = KafkaProducer(bootstrap_servers=kafka_url, security_protocol='SSL',
+        connection = kafka.KafkaProducer(bootstrap_servers=kafka_url,
+            security_protocol='SSL',
             ssl_cafile=os.path.join(cert_path, AIVEN_CA_CERT_FILE),
             ssl_certfile=os.path.join(cert_path, KAFKA_CERT_FILE),
             ssl_keyfile=os.path.join(cert_path, KAFKA_KEY_FILE))
@@ -70,3 +73,4 @@ def check_kafka_ssl_files(cert_path):
         message = "Required file(s) not found in %s: %s" % (cert_path, str(missing))
         LOGGER.error(message)
         raise FileNotFoundError(message)
+    return True
