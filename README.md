@@ -4,7 +4,7 @@ Trying out Aiven Kafka and PostgreSQL
 ### Introduction
 This project is a demonstration of how one might write a system for monitoring websites using Kafka.
 
-There are two main script files in this repo, `producer.py` and `consumer.py`. The former script does the job of querying a website, noting the observed response time, status code and searching for the given regex string, then publishing that information to kafka. The latter script listens to kafka and consumes messages, converting the information to SQL records which it inserts into PostgreSQL.
+There are two main script files in this repo, `producer.py` and `consumer.py`. The former script does the job of querying a website, noting the observed response time, status code and searching for the given regex string, then publishing that information to kafka. The latter script listens to kafka and consumes its messages, converting the information to db records which it inserts into PostgreSQL.
 
 ### Prerequisites
 To use this project you will need to set up both Kafka and PostgreSQL instances at https://aiven.io/ - this is because I've written the connection handling code as per Aiven's SSL configuration particulars, although other service providers may do the same, I cannot guarantee that.
@@ -18,18 +18,19 @@ Checkout this repo to a convenient directory, cd into it and run the following c
 
 ```
 $ python3 -m venv env
-or
+or if you're using Centos or RHEL:
 $ virtualenv env
+then:
 $ source ./env/bin/activate
-$ python3 -m pip install .
+$ pip install .
 ```
 
 On Windows:
 
 ```
-$ python3 -m venv env
-$ .\env\Scripts\activate.bat
-$ python3 -m pip install .
+> python3 -m venv env
+> .\env\Scripts\activate.bat
+> python3 -m pip install .
 ```
 
 ### Running the scripts
@@ -67,6 +68,20 @@ A concrete example of this would be (remember to use the virtualenv you set up d
 
 NB: The reddit link will give you a mixture of `200` and `429` responses, which make for more interesting data.
 
+### Running tests
+This project is fully tested. Run tests like this:
+```
+$ cd tests
+$ python3 test_all.py
+```
+That's it, there's only one test module with 8 unit tests in it.
+
+For coverage report, run the following:
+```
+$ python3 -m coverage run test_all.py
+$ python3 -m coverage report -m
+```
+
 ### Scaling up and monitoring lots of pages
 For `producer.py`, you must supply a URL and a regex string to look for, each instance of `producer.py` only takes one pair of these. This is because I have envisioned that a likely use case would be containerisation, so you can spin up one instance of `producer.py` for each of the websites/pages you want to monitor. For example, 100 producer containers would scale rather better than 1 with 100 URLs to look for. The consumer container can presumably be scaled horizontally, for example in Kubernetes a deployment can be defined which can scale the producer up over however much hardware you want.
 
@@ -74,6 +89,8 @@ For `producer.py`, you must supply a URL and a regex string to look for, each in
 A good enhancement would be to implement a proper scheduler, so that instead of checking the target site every n seconds, the producer script might take a list of url/regex pairs and check each one of them according to a schedule, for example check 10 sites at 15 past each hour.
 
 Another idea would be to handle db inserts by caching records in the consumer and having a threaded worker which does bulk inserts every 100 records or such. Right now there is one cursor execute + commit per record inserted, which is likely causing some overhead and might lag with heavy load.
+
+I've been meaning to get up to date on type hinting, I read through [PEP 484](https://www.python.org/dev/peps/pep-0484/) but it felt like too much to get into for a small project like this.
 
 ### References
 
@@ -95,4 +112,4 @@ A recipe for checking if a table exists using `psycopg2`: https://stackoverflow.
 
 More `psycopg2` recipes here: https://pynative.com/python-postgresql-tutorial/ (NB: I really don't like the `try: except:` block around multiple lines in the first example - if I cannot connect to the db I actually want to exit the program with the original exception. Also, having looked at it a bit, I don't think it does anything bad to the server if you don't close the connection or cursor objects, they're client side only. Anyway, multiple lines in a try except block is a bad idea in general as it can mask bugs.)
 
-And finally the PostgreSQL docs: https://www.postgresql.org/docs/9.5/datatype-numeric.html
+Also testing with mocks for Postgres and Kafka was assisted by the following: https://medium.com/swlh/python-testing-with-a-mock-database-sql-68f676562461 , https://stackoverflow.com/questions/35143055/how-to-mock-psycopg2-cursor-object
