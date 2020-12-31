@@ -30,7 +30,7 @@ On Windows:
 ```
 > python3 -m venv env
 > .\env\Scripts\activate.bat
-> python3 -m pip install .
+> pip install .
 ```
 
 ### Running the scripts
