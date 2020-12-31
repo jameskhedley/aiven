@@ -8,6 +8,7 @@ import json
 import logging
 import kafka
 import psycopg2
+import requests
 
 import common
 import producer
@@ -94,6 +95,30 @@ class MyTest(unittest.TestCase):
         #should be 1 call for the exists check, 1 for the CREATE TABLE, then another exists check
         self.assertEqual(mock_db_conn.cursor.return_value.execute.call_count, 3)
     
+    def test_producer_main_inner(self):
+        class TestResponse():
+            def __init__(self, sample_html):
+                self.lines = [sample_html]
+                self.encoding = "utf-8"
+                self.elapsed = 1234
+                self.status_code = 200
+            def iter_lines(self):
+                return self.lines
+                
+        mock_producer = mock.MagicMock(autospec=True)
+        
+        producer.REQUEST_INTERVAL = 0
+        sample_html = b"<html>Last updated<!-- --> <time>today at 21:02</time></html>"
+        test_response = TestResponse(sample_html)
+        expected_message = b'{"response_time": "1234", "status_code": 200, "url": "some.thing", '
+        expected_message += b'"matched_string": "Last updated<!-- --> <time>today at 21:02</time>"}'
+        with mock.patch.object(requests, 'get', return_value=test_response) as mock_request:
+            producer.main_inner(mock_producer, "some_topic", "some.thing",  
+                                    "Last updated<!-- --> <time>[^\s]+ at \d\d:\d\d</time>")
+                                    
+            mock_producer.send.assert_called_once_with("some_topic", key=b"something-better", 
+                                                            value=expected_message)
+    
     @mock.patch("common.get_kafka_connection")
     @mock.patch("common.connect_to_postgresql")
     @mock.patch("common.check_kafka_ssl_files")
@@ -104,18 +129,18 @@ class MyTest(unittest.TestCase):
                 self.value = value
                 self.timestamp = 1609207728871
 
-        with mock.patch.object(kafka.KafkaConsumer, '__iter__', return_value=iter([1,2,3])):
-            msg = {"url": "some.thing", "response_time": 0, "timestamp":1609207728871,
+
+        msg = {"url": "some.thing", "response_time": 0, "timestamp":1609207728871,
                         "status_code":200, "matched_string":"hello"}
-            json_msg0 = json.dumps(msg)
-            msg['url'] = "blah.blah"
-            json_msg1 = json.dumps(msg)
-            #mocked consumer will produce 2 messages
-            mock_get_kafka.return_value = [Message(json_msg0), Message(json_msg1)]
-            with mock.patch("psycopg2.connect") as mock_db_conn:
-                mock_connect_to_psql.return_value = mock_db_conn
-                mock_db_conn.cursor.return_value.execute.return_value = True
-                result = consumer.main("kafka.something.com", "some_topic", 
+        json_msg0 = json.dumps(msg)
+        msg['url'] = "blah.blah"
+        json_msg1 = json.dumps(msg)
+        #mocked consumer will produce 2 messages
+        mock_get_kafka.return_value = [Message(json_msg0), Message(json_msg1)]
+        with mock.patch("psycopg2.connect") as mock_db_conn:
+            mock_connect_to_psql.return_value = mock_db_conn
+            mock_db_conn.cursor.return_value.execute.return_value = True
+            result = consumer.main("kafka.something.com", "some_topic", 
                                         "postgesql.something.com", "a_path")
                                     
         self.assertTrue(result)    

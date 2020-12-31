@@ -25,30 +25,36 @@ def main(kafka_url, topic_name, monitor_url, monitor_regex, cert_path=""):
 
     logger.info("Starting producer loop, ctrl+c or SIGINT to exit")
     while True:
-        resp = requests.get(monitor_url, stream=True)
-        #don't read data yet but record statistics
-        statistics = {"response_time": str(resp.elapsed), "status_code": resp.status_code,
-                        "url": monitor_url, "matched_string": ""}
+        main_inner(producer, topic_name, monitor_url, monitor_regex)
 
-        #build the regex pattern according to the encoding of the connection
-        pattern = bytes(monitor_regex, encoding=resp.encoding)
-        regex = re.compile(pattern)
+def main_inner(kafka_producer, topic_name, monitor_url, monitor_regex):
+    '''Split this out of main so it's easier to test, basically'''
+    resp = requests.get(monitor_url, stream=True)
+    #don't read data yet but record statistics
+    statistics = {"response_time": str(resp.elapsed), "status_code": resp.status_code,
+                    "url": monitor_url, "matched_string": ""}
 
-        # streaming the page may save memory
-        for line in resp.iter_lines():
-            found = regex.search(line)
-            if found:
-                #import pdb; pdb.set_trace()
-                #TODO enc is correct?
-                statistics['matched_string'] = found.group().decode(resp.encoding)
-                break
+    #build the regex pattern according to the encoding of the connection
+    pattern = bytes(monitor_regex, encoding=resp.encoding)
+    regex = re.compile(pattern)
 
-        logger.info("Sending this payload to topic %s: %s", topic_name, str(statistics))
-        #whatever happened, report to kafka
-        bytes_value = bytes(json.dumps(statistics), encoding='utf8')
-        producer.send(topic_name, key=b"something-better", value=bytes_value) #TODO think about key?
+    # streaming the page will save some memory
+    for line in resp.iter_lines():
+        found = regex.search(line)
+        if found:
+            #import pdb; pdb.set_trace()
+            statistics['matched_string'] = found.group().decode(resp.encoding)
+            break
 
-        time.sleep(REQUEST_INTERVAL)
+    logger.info("Sending this payload to topic %s: %s", topic_name, str(statistics))
+    #whatever happened, report to kafka
+    bytes_value = bytes(json.dumps(statistics), encoding='utf8')
+
+    #TODO think about a better key to use?
+    print(bytes_value)
+    kafka_producer.send(topic_name, key=b"something-better", value=bytes_value)
+
+    time.sleep(REQUEST_INTERVAL)
 
 
 if __name__=='__main__':

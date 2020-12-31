@@ -17,7 +17,7 @@ def main(kafka_url, topic_name, postgesql_uri, cert_path=""):
     if not cert_path:
         cert_path = os.getcwd()
     common.check_kafka_ssl_files(cert_path)
-    
+
     conn = common.connect_to_postgresql(postgesql_uri)
 
     setup_db(conn)
@@ -31,7 +31,7 @@ def main(kafka_url, topic_name, postgesql_uri, cert_path=""):
     #lots of fields you would want a server side cursor (below this is a client-side cursor).
     cursor = conn.cursor()
     atexit.register(on_exit, cursor, conn)
-    
+
     # consume messages and write to db
     for message in consumer:
         insert_query = '''INSERT INTO statistics (url, response_time, timestamp,
@@ -63,7 +63,7 @@ def setup_db(connection):
                         where table_name='statistics')'''
     cursor.execute(exists_query)
     exists = cursor.fetchone()[0]
-    
+
     if exists:
         logger.info("Statistics table already exists.")
     else:
@@ -80,7 +80,8 @@ def setup_db(connection):
             logger.info("Statistics table created OK")
         else:
             cursor.close()
-            raise RuntimeError("Couldn't create statistics table in db") #TODO could be better
+            #TODO could be better
+            raise RuntimeError("Couldn't create statistics table in db") 
     cursor.close()
     return True
 
